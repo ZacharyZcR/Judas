@@ -24,6 +24,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5E1A6B142D8F9A5F00AF4845 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		5E1A6B162D8F9A5F00AF4845 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		5E3D727E2D8F127100B5FC6A /* Judas.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Judas.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E3D728E2D8F127200B5FC6A /* JudasTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JudasTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E3D72982D8F127200B5FC6A /* JudasUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JudasUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -72,12 +74,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5E1A6B132D8F9A5F00AF4845 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				5E1A6B142D8F9A5F00AF4845 /* WidgetKit.framework */,
+				5E1A6B162D8F9A5F00AF4845 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		5E3D72752D8F127100B5FC6A = {
 			isa = PBXGroup;
 			children = (
 				5E3D72802D8F127100B5FC6A /* Judas */,
 				5E3D72912D8F127200B5FC6A /* JudasTests */,
 				5E3D729B2D8F127200B5FC6A /* JudasUITests */,
+				5E1A6B132D8F9A5F00AF4845 /* Frameworks */,
 				5E3D727F2D8F127100B5FC6A /* Products */,
 			);
 			sourceTree = "<group>";

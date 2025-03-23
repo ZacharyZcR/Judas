@@ -4,8 +4,6 @@ import Combine
 struct ContentView: View {
     @StateObject private var viewModel = ScannerViewModel()
     @State private var selectedTab = 0
-    // 添加一个本地状态来直接控制UI
-    @State private var isScanning = false
     
     var body: some View {
         NavigationView {
@@ -18,8 +16,8 @@ struct ContentView: View {
                 
                 // 主内容区域
                 ZStack {
-                    // 重要改动：使用本地isScanning状态控制视图
-                    if isScanning {
+                    // 关键修改：使用viewModel.isScanning而不是本地状态
+                    if viewModel.isScanning {
                         // 扫描中状态
                         scanningView
                     } else if viewModel.devices.isEmpty {
@@ -32,7 +30,7 @@ struct ContentView: View {
                 }
                 .frame(maxHeight: .infinity)
                 
-                // 操作按钮 - 使用本地状态控制
+                // 操作按钮 - 使用viewModel状态控制
                 scanButtonView
                     .padding(.bottom, 8)
             }
@@ -90,15 +88,15 @@ struct ContentView: View {
                     Divider().padding(.vertical, 4)
                     
                     HStack {
-                        Image(systemName: isScanning ? "hourglass" : "exclamationmark.triangle.fill")
-                            .foregroundColor(isScanning ? .blue : .red)
+                        Image(systemName: viewModel.isScanning ? "hourglass" : "exclamationmark.triangle.fill")
+                            .foregroundColor(viewModel.isScanning ? .blue : .red)
                         
                         Text(message)
                             .font(.subheadline)
-                            .foregroundColor(isScanning ? .blue : .red)
+                            .foregroundColor(viewModel.isScanning ? .blue : .red)
                     }
                     .padding(8)
-                    .background(Color(isScanning ? .blue : .red).opacity(0.1))
+                    .background(Color(viewModel.isScanning ? .blue : .red).opacity(0.1))
                     .cornerRadius(6)
                 }
             }
@@ -125,7 +123,7 @@ struct ContentView: View {
             Text("自定义子网").tag(1)
         }
         .pickerStyle(SegmentedPickerStyle())
-        .disabled(isScanning)
+        .disabled(viewModel.isScanning)
         .onChange(of: selectedTab) { newValue in
             viewModel.networkScanner.scanType = newValue == 0 ? .localSubnet : .customSubnet
         }
@@ -274,7 +272,7 @@ struct ContentView: View {
                             .keyboardType(.decimalPad)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
-                            .disabled(isScanning)
+                            .disabled(viewModel.isScanning)
                             .overlay(
                                 Group {
                                     if !viewModel.customSubnet.isEmpty {
@@ -296,38 +294,27 @@ struct ContentView: View {
         }
     }
     
-    // 扫描按钮
+    // 修改扫描按钮逻辑
     private var scanButtonView: some View {
         VStack {
             // 自定义输入区域（如果需要）
             customInputView
-            
+                
             // 按钮
             Button(action: {
-                if isScanning {
+                if viewModel.isScanning {
                     // 停止扫描
-                    isScanning = false
                     viewModel.stopScan()
                 } else {
-                    // 开始扫描 - 关键改动：先更新UI状态，再开始扫描
+                    // 开始扫描 - 直接调用ViewModel方法，让它处理状态
                     print("扫描按钮被点击")
-                    isScanning = true
-                    
-                    // 给UI一点时间更新后再启动扫描
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        viewModel.startScan()
-                        
-                        // 添加扫描完成监听
-                        viewModel.onScanComplete = {
-                            isScanning = false
-                        }
-                    }
+                    viewModel.startScan()
                 }
             }) {
                 HStack {
-                    Image(systemName: isScanning ? "stop.fill" : "play.fill")
+                    Image(systemName: viewModel.isScanning ? "stop.fill" : "play.fill")
                         .font(.headline)
-                    Text(isScanning ? "停止扫描" : "开始扫描")
+                    Text(viewModel.isScanning ? "停止扫描" : "开始扫描")
                         .font(.headline)
                 }
                 .frame(height: 22)
@@ -339,27 +326,27 @@ struct ContentView: View {
                         .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
                 )
                 .foregroundColor(.white)
-                .scaleEffect(isScanning ? 0.98 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isScanning)
+                .scaleEffect(viewModel.isScanning ? 0.98 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: viewModel.isScanning)
             }
             .disabled(isButtonDisabled)
         }
     }
     
-    // 按钮背景颜色
+    // 更新按钮背景颜色计算
     private var buttonBackgroundColor: Color {
         if isButtonDisabled {
             return Color.gray
-        } else if isScanning {
+        } else if viewModel.isScanning {
             return Color.red
         } else {
             return Color.blue
         }
     }
     
-    // 按钮是否禁用
+    // 更新按钮禁用条件
     private var isButtonDisabled: Bool {
         (selectedTab == 0 && !viewModel.networkScanner.isNetworkConnected) ||
-        (selectedTab == 1 && viewModel.customSubnet.isEmpty && !isScanning)
+        (selectedTab == 1 && viewModel.customSubnet.isEmpty && !viewModel.isScanning)
     }
 }

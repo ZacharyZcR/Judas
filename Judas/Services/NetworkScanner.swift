@@ -18,6 +18,11 @@ class NetworkScanner: ObservableObject {
         case customSubnet
     }
     
+    // MARK: - 添加全局超时相关属性
+    @Published var globalTimeoutSeconds: Int = 60 // 默认1分钟超时
+    @Published var isGlobalTimeoutEnabled: Bool = true // 是否启用全局超时
+    private var globalTimeoutWorkItem: DispatchWorkItem?
+    
     var scanType: ScanType = .localSubnet
     
     // 扩展常用端口列表
@@ -153,6 +158,10 @@ class NetworkScanner: ObservableObject {
         currentScanTask?.cancel()
         currentScanTask = nil
         
+        // 取消全局超时任务
+        globalTimeoutWorkItem?.cancel()
+        globalTimeoutWorkItem = nil
+        
         // 取消所有活动连接
         cancelAllConnections()
         
@@ -235,11 +244,24 @@ class NetworkScanner: ObservableObject {
         return true
     }
     
+    // 更新全局超时时间
+    func updateGlobalTimeout(seconds: Int) {
+        globalTimeoutSeconds = max(10, min(seconds, 300)) // 限制在10秒到5分钟之间
+    }
+
+    // 切换全局超时启用状态
+    func toggleGlobalTimeout() {
+        isGlobalTimeoutEnabled.toggle()
+    }
+    
     // MARK: - 私有方法
     
     /// 启动新的扫描过程
     private func initiateNewScan() {
         print("开始新的扫描过程")
+        
+        // 启动全局超时计时器
+        startGlobalTimeoutTimer()
         
         // 重置状态
         scanningErrorMessage = nil
@@ -383,8 +405,8 @@ class NetworkScanner: ObservableObject {
                     self.scanningErrorMessage = nil
                 }
                 
-                // 最后设置扫描状态为完成
-                self.isScanningInProgress = false
+//                // 最后设置扫描状态为完成
+//                self.isScanningInProgress = false
             }
         }
         
@@ -607,5 +629,33 @@ class NetworkScanner: ObservableObject {
         
         // 仅返回C类网络前缀
         return networkParts.count >= 3 ? "\(networkParts[0]).\(networkParts[1]).\(networkParts[2])." : "未知"
+    }
+    
+    // 启动全局超时计时器
+    private func startGlobalTimeoutTimer() {
+        // 仅在启用全局超时时启动计时器
+        guard isGlobalTimeoutEnabled else {
+            print("全局超时已禁用")
+            return
+        }
+        
+        // 取消之前可能存在的超时任务
+        globalTimeoutWorkItem?.cancel()
+        
+        // 创建新的超时任务
+        let timeoutWork = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            
+            print("全局扫描超时 (\(self.globalTimeoutSeconds)秒)")
+            
+            // 停止扫描
+            self.stopScan()
+        }
+        
+        self.globalTimeoutWorkItem = timeoutWork
+        
+        // 安排超时任务在指定时间后执行
+        print("设置全局扫描超时: \(globalTimeoutSeconds)秒")
+        DispatchQueue.main.asyncAfter(deadline: .now() + TimeInterval(globalTimeoutSeconds), execute: timeoutWork)
     }
 }
